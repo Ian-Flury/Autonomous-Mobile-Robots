@@ -4,11 +4,3 @@ CCS12.5.0.00007_win64/
 dvt/
 RemoteSystemsTempFiles
 **/Debug
-
-*
-!*.c
-!*.h
-!*.txt
-!*.s
-!*.pdf
-!*.zip
