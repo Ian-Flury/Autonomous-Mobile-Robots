@@ -29,5 +29,32 @@ void main(void)
 
         Motor_Stop();
         Clock_Delay1ms(2000);
+
+
+        // actual lab code:
+
+        uint8_t sensor_data = 0;
+
+        // forwards
+        while (!sensor_data)
+        {
+            Motor_Forward(5000, 5000);
+            sensor_data = Reflectance_Read(1000);
+            if (sensor_data)
+            {
+                break;
+            }
+        }
+
+        // backwards
+        while (!sensor_data)
+        {
+
+        }
 	}
 }
+
+
+
+
+
