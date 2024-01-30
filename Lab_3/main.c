@@ -15,11 +15,19 @@ void main(void)
 
 	while (1)
 	{
-	    Motor_Forward(10000, 10000);
-	    Clock_Delay1ms(500);
+	    Motor_Forward(2000, 2000);
+	    Clock_Delay1ms(1000);
 
-	    Motor_Backward(10000,10000);
-
+	    Motor_Stop();
         Clock_Delay1ms(500);
+
+        Motor_Right(1000,2000);
+        Clock_Delay1ms(500);
+
+        Motor_Left(2000,1000);
+        Clock_Delay1ms(500);
+
+        Motor_Stop();
+        Clock_Delay1ms(2000);
 	}
 }
