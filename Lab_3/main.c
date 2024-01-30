@@ -12,46 +12,37 @@ void main(void)
 	Reflectance_Init();
 	Motor_Init();
 
+	// delay for a second so the robot doesn't take off when we click the button.
+	Clock_Delay1ms(750);
 
-	while (1)
-	{
-	    Motor_Forward(2000, 2000);
-	    Clock_Delay1ms(1000);
-
-	    Motor_Stop();
-        Clock_Delay1ms(500);
-
-        Motor_Right(1000,2000);
-        Clock_Delay1ms(500);
-
-        Motor_Left(2000,1000);
-        Clock_Delay1ms(500);
-
-        Motor_Stop();
-        Clock_Delay1ms(2000);
-
-
-        // actual lab code:
-
-        uint8_t sensor_data = 0;
-
-        // forwards
-        while (!sensor_data)
+    uint8_t sensor_data = Reflectance_Read(1000);
+    // forwards
+    while (!sensor_data)
+    {
+        Motor_Forward(5000,5000);
+        Clock_Delay1ms(10);
+        sensor_data = Reflectance_Read(1000);
+        if (sensor_data != 0)
         {
-            Motor_Forward(5000, 5000);
-            sensor_data = Reflectance_Read(1000);
-            if (sensor_data)
-            {
-                break;
-            }
+            Motor_Stop();
+            break;
         }
+    }
 
-        // backwards
-        while (!sensor_data)
+    Clock_Delay1ms(500);
+
+    sensor_data = Reflectance_Read(1000);
+    while (!sensor_data)
+    {
+        Motor_Backward(1200,1200);
+        Clock_Delay1ms(10);
+        sensor_data = Reflectance_Read(1000);
+        if (sensor_data != 0)
         {
-
+            Motor_Stop();
+            break;
         }
-	}
+    }
 }
 
 

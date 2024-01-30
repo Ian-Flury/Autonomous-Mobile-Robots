@@ -50,6 +50,7 @@ policies, either expressed or implied, of the FreeBSD Project.
 #include <stdint.h>
 #include "msp.h"
 #include "PWM.h"
+#include "RobotLights.h"
 
 // *******Lab 13 solution*******
 
@@ -85,7 +86,7 @@ void Motor_Init(void){
 
 
     // complete this as part of Lab 3
-
+    MvtLED_Init();
   
 }
 
@@ -99,6 +100,8 @@ void Motor_Stop(void){
   P3->OUT = (P3->OUT & 0xC0) & ~0xC0; // zeros turn off the motors
   PWM_Duty3(0);
   PWM_Duty4(0);
+  Front_Lights_OFF();
+  Back_Lights_OFF();
 }
 
 // ------------Motor_Forward------------
@@ -115,6 +118,7 @@ void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){
   P5->OUT = (P5->OUT&(~0x30)) | 0; // zeros for forward movement.
   PWM_Duty3(rightDuty);
   PWM_Duty4(leftDuty);
+  Front_Lights_ON();
 }
 
 // ------------Motor_Right------------
@@ -170,4 +174,5 @@ void Motor_Backward(uint16_t leftDuty, uint16_t rightDuty){
     P5 -> OUT = (P5->OUT&(~0x30)) | 0x30; // ones for backward movement.
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
+    Back_Lights_ON();
 }
