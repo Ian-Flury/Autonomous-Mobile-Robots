@@ -20,7 +20,6 @@ void HandleCollision(uint8_t ISR_data)
     intflag = 1;
 }
 
-
 /**
  * main.c
  */
@@ -31,31 +30,23 @@ void main(void)
     MvtLED_Init();
     BumpInt_Init(&HandleCollision);
     Motor_Init();
-    
-    // start inital move forwards.
-
     while (1)
     {
-
 	    if (intflag)
 	    {
 	        Clock_Delay1ms(1000);
 	        intflag = 0;
-
-            // if bump left
-            if (bump & 0xF0) {
-                // turn right
-                Motor_Right(0,3000);
+            // bump left, turn right
+            if (bump > 7) {
+                Motor_Right(0, 3000);
                 Clock_Delay1ms(1000);
             }
-
-            // if bump right
-            if (bump & 0x0F) {
+            // bump right, turn left
+            if (bump < 8) {
                 // turn left
                 Motor_Left(3000,0);
                 Clock_Delay1ms(1000);
             }
-
             Motor_Stop();
 	    } else {
 	        Motor_Forward(3000,3000);

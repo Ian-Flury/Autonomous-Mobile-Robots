@@ -55,18 +55,20 @@ uint8_t Bump_Read(void){
     // bit 1 Bump1
     // bit 0 Bump0
     uint8_t tmp = 0;
+    uint8_t shift = 0;
+
     uint8_t res = 0;
     uint8_t raw = P4->IN;
 
     uint8_t lower = raw & 0x0F;
     uint8_t upper = raw & 0xF0;
-    tmp = lower & 0x01;
 
-    res = (lower >> 1) | tmp;
+    // lower
+    shift = lower >> 1;
+    tmp = raw & 0x01;
+    shift &= tmp;
 
-    tmp = 0;
-    tmp = upper >> 2;
-    res |= tmp;
+    res = upper >> 2 | shift;
 
     return res;
 }

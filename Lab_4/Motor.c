@@ -84,10 +84,8 @@ void Motor_Init(void){
     P3->SEL1 &= ~0xC0;
     P3->SEL0 &= ~0xC0;
 
-
     // complete this as part of Lab 3
     MvtLED_Init();
-  
 }
 
 // ------------Motor_Stop------------
@@ -131,12 +129,11 @@ void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){
 // Assumes: Motor_Init() has been called
 void Motor_Right(uint16_t leftDuty, uint16_t rightDuty){ 
   // write this as part of Lab 3
-    P3 -> OUT = (P3->OUT&(~0xC0)) | 0xC0; // activate drivers
-    P5 -> OUT = (P5->OUT&(~0x30)) | 0; // zeros for forward movement.
-    P5 -> OUT = (P5->OUT&(~0x30)) | 0x10;     // right motor goes backwards.
+    P3 -> OUT = (P3->OUT&(~0xC0)) | 0xC0;     // activate drivers
+    P5 -> OUT = (P5->OUT&(~0x30)) | 0;        // zeros for forward movement.
+    P5 -> OUT = (P5->OUT&(~0x30)) | 0x20;     // right motor goes backwards.
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
-
 }
 
 // ------------Motor_Left------------
@@ -149,13 +146,9 @@ void Motor_Right(uint16_t leftDuty, uint16_t rightDuty){
 // Assumes: Motor_Init() has been called
 void Motor_Left(uint16_t leftDuty, uint16_t rightDuty){ 
   // write this as part of Lab 3
-    P3 -> OUT = (P3 -> OUT&(~0xC0)) | 0xC0; // activate drivers
-    P5 -> OUT = (P5->OUT &(~0x30)) | 0; // zeros for forward movement.
-    P5 -> OUT = (P5->OUT &(~0x30)) | 0x20;     // left motor goes backwards
-
-//    P3 -> OUT |= 0xC0; // activate drivers
-//    P5 -> OUT &= ~0x30; // zeros for forward movement.
-//    P5 -> OUT |= 0x20; // left motor goes backwards
+    P3 -> OUT = (P3 -> OUT&(~0xC0)) | 0xC0;    // activate drivers
+    P5 -> OUT = (P5->OUT &(~0x30)) | 0;        // zeros for forward movement.
+    P5 -> OUT = (P5->OUT &(~0x30)) | 0x10;     // left motor goes backwards
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
 }
