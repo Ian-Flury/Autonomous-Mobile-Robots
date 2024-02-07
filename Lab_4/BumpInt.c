@@ -26,7 +26,7 @@ void BumpInt_Init(void(*task)(uint8_t)){
     // Activate interface pullup
     // pins 7,6,5,3,2,0  11101101 -> 1110111
     // Interrupt on falling edge (on touch)
-
+    rTask = task;
     DisableInterrupts();
     FallingEdges4 = 0;
     P4->SEL0 &= ~0xED;
@@ -54,17 +54,27 @@ uint8_t Bump_Read(void){
     // bit 2 Bump2
     // bit 1 Bump1
     // bit 0 Bump0
-    uint8_t raw_bump_in = P4->IN;
-    //TODO: fix this
-    uint8_t lower = ((raw_bump_in & 0xFE) >> 1) & (raw_bump_in & 0x01);
-    uint8_t higher = (raw_bump_in & 0xF0) >> 5;
+    uint8_t tmp = 0;
+    uint8_t res = 0;
+    uint8_t raw = P4->IN;
 
-    return lower & (higher >> 3);
+    uint8_t lower = raw & 0x0F;
+    uint8_t upper = raw & 0xF0;
+    tmp = lower & 0x01;
+
+    res = (lower >> 1) | tmp;
+
+    tmp = 0;
+    tmp = upper >> 2;
+    res |= tmp;
+
+    return 0x3F&res;
 }
 // we do not care about critical section/race conditions
 // triggered on touch, falling edge
 void PORT4_IRQHandler(void){
+    FallingEdges4++;
     rTask(Bump_Read()); // Execute task from high-level software
-    P4 -> IFG &= ~0xED; // ACK all
+    P4->IFG &= ~0xED; // ACK all
 }
 
