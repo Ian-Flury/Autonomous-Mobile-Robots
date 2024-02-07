@@ -49,7 +49,7 @@ void main(void)
             }
             Motor_Stop();
 	    } else {
-	        Motor_Forward(3000,3000);
+	        Motor_Forward(5000,5000);
 	        Clock_Delay1ms(100);
 	    }
     }
