@@ -6,14 +6,20 @@
 #include "Motor.h"
 #include "PWM.h"
 
-uint8_t bump;
+uint8_t bump = 0;
+int intflag = 0;
 
 void HandleCollision(uint8_t ISR_data)
 {
-    bump = 0;
-    bump = ISR_data;
-    Front_Lights_OFF();
+    bump = ~ISR_data;
+    bump = bump & 0x3F;
+    Motor_Stop();
+    Motor_Backward(3000,3000);
+    Clock_Delay1ms(400);
+    Motor_Stop();
+    intflag = 1;
 }
+
 
 /**
  * main.c
@@ -23,35 +29,37 @@ void main(void)
     WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
     Clock_Init48MHz();
     MvtLED_Init();
-    // Motor_Init();
     BumpInt_Init(&HandleCollision);
+    Motor_Init();
     
+    // start inital move forwards.
 
     while (1)
     {
 
-//	    MotorForward(); // 33 percent duty cycle
-        Clock_Delay1ms(1000);
-//	    bump = ;
-//	    // if bump
-//	    if (bump...)
-//	    {
-//            // stop
-//            MotorStop();
-//
-//            // backup for 400 ms
-//            MotorBackward();
-//
-//            // if bump left
-//            if (bump > ) {
-//                // turn right
-//                MotorRight();
-//            }
-//            // if bump right
-//            else if (bump < ) {
-//                // turn left
-//                MotorLeft();
-//            }
-//	    }
+	    if (intflag)
+	    {
+	        Clock_Delay1ms(1000);
+	        intflag = 0;
+
+            // if bump left
+            if (bump & 0xF0) {
+                // turn right
+                Motor_Right(0,3000);
+                Clock_Delay1ms(1000);
+            }
+
+            // if bump right
+            if (bump & 0x0F) {
+                // turn left
+                Motor_Left(3000,0);
+                Clock_Delay1ms(1000);
+            }
+
+            Motor_Stop();
+	    } else {
+	        Motor_Forward(3000,3000);
+	        Clock_Delay1ms(100);
+	    }
     }
 }

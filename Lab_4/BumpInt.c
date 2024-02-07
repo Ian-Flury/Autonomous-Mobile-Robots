@@ -68,7 +68,7 @@ uint8_t Bump_Read(void){
     tmp = upper >> 2;
     res |= tmp;
 
-    return 0x3F&res;
+    return res;
 }
 // we do not care about critical section/race conditions
 // triggered on touch, falling edge
