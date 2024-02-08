@@ -34,7 +34,6 @@ void main(void)
     {
 	    if (intflag)
 	    {
-	        Clock_Delay1ms(1000);
 	        intflag = 0;
             // bump left, turn right
             if (bump > 7) {
@@ -50,7 +49,6 @@ void main(void)
             Motor_Stop();
 	    } else {
 	        Motor_Forward(5000,5000);
-	        Clock_Delay1ms(100);
 	    }
     }
 }
