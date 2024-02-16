@@ -22,7 +22,6 @@ typedef const struct State State_t;
 #define HardLeft &fsm[4]
 #define Backward &fsm[5]
 
-
 State_t fsm[6]= {
     {0x01, 10, { HardRight, HardRight,  Center,     Center}},   // Turn Right
     {0x02, 10, { HardLeft,  Center,     HardLeft,   Center}},   // Turn Left
@@ -58,10 +57,10 @@ void main(void)
         case 3: // Forward
             Motor_Forward(speed, speed);
             break;
-        case 4: // Left Forward (Hard Right)
+        case 4: // Left Forward, Right Backwards (Hard Right)
             Motor_Right(1.5*speed, 1.5*speed);
             break;
-        case 5: // Right Forward (Hard Left)
+        case 5: // Right Forward, Left Backwards (Hard Left)
             Motor_Left(1.5*speed, 1.5*speed);
             break;
         case 6: // Backwards
