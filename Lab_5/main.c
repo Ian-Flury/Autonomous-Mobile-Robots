@@ -15,28 +15,27 @@ struct State {
 };
 typedef const struct State State_t;
 
-#define Center &fsm[0]
+#define Right &fsm[0]
 #define Left &fsm[1]
-#define Right &fsm[2]
-#define HardLeft &fsm[3]
-#define HardRight &fsm[4]
+#define Center &fsm[2]
+#define HardRight &fsm[3]
+#define HardLeft &fsm[4]
 #define Backward &fsm[5]
 
 
 State_t fsm[6]= {
-//               0x00       0x01       0x10      0x11
-    {0x06, 20, { Backward, Right,     Left,     Center }},     // Backwards
-    {0x05, 20, { Backward, Center,    HardLeft, Center }},     // HardLeft
-    {0x04, 20, { Backward, HardRight, Center,   Center }},     // HardRight
-    {0x03, 20, { Backward, Right,     Left,     Center }},     // Center
-    {0x02, 20, { Backward, Center,    HardLeft, Center }},    // Left
-    {0x01, 20, { Backward, HardRight, Center,   Center }}     // Right
+    {0x01, 10, { HardRight, HardRight,  Center,     Center}},   // Turn Right
+    {0x02, 10, { HardLeft,  Center,     HardLeft,   Center}},   // Turn Left
+    {0x03, 20, { HardRight, Right,      Left,       Center}},   // Center
+    {0x04, 20, { HardRight, HardRight,  Left,       Center}},   // Turn Hard Right
+    {0x05, 20, { HardLeft,  Right,      HardLeft,   Center}},   // Turn Hard Left
+    {0x06, 20, { Backward,  Right,      Left,       Center}}    // Center
 };
 
 State_t *Spt; // pointer to the current state
 void main(void)
 {
-    uint16_t speed = 2000;
+    uint16_t speed = 2500;
     uint8_t next_state;
     uint8_t leftMotor, rightMotor;
     uint32_t Time = 1000;
@@ -50,24 +49,20 @@ void main(void)
     while (1){
         switch(Spt->out)
         {
-        case 1: // Turn Right
-            Motor_Right(0, speed);
+        case 1: // Left Forward (Turn Right)
+            Motor_Forward(speed, speed/3);
             break;
-        case 2: // Turn Left
-            Motor_Left(speed, 0);
+        case 2: // Right Forward (Turn Left)
+            Motor_Forward(speed/3, speed);
             break;
         case 3: // Forward
             Motor_Forward(speed, speed);
             break;
-        case 4: // Hard Right
-            Motor_Right(0, speed);
-            Clock_Delay1ms(10);
-            Motor_Forward(speed, 0);
+        case 4: // Left Forward (Hard Right)
+            Motor_Right(1.5*speed, 1.5*speed);
             break;
-        case 5: // Hard Left
-            Motor_Left(speed, 0);
-            Clock_Delay1ms(10);
-            Motor_Forward(speed, 0);
+        case 5: // Right Forward (Hard Left)
+            Motor_Left(1.5*speed, 1.5*speed);
             break;
         case 6: // Backwards
             Motor_Backward(speed, speed);
