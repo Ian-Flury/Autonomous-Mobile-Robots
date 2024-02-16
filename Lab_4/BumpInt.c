@@ -10,14 +10,9 @@
 #include "msp.h"
 #include "CortexM.h" // Global Interrupt Control
 
-
 void(*rTask)(uint8_t); // Globalizing input function
 
-
-
 uint8_t FallingEdges4;
-
-
 
 void BumpInt_Init(void(*task)(uint8_t)){
     // write this as part of Lab 4
@@ -40,9 +35,7 @@ void BumpInt_Init(void(*task)(uint8_t)){
     NVIC->IP[9]=(NVIC->IP[9]&0xFF00FFFF)|0x00200000;    // bits 23-21
     NVIC->ISER[1] = 0x00000040; // enable bit 6
     EnableInterrupts();
-
 }
-
 
 uint8_t Bump_Read(void){
     // write this as part of Lab 4
@@ -56,18 +49,14 @@ uint8_t Bump_Read(void){
     // bit 0 Bump0
     uint8_t tmp = 0;
     uint8_t shift = 0;
-
     uint8_t res = 0;
     uint8_t raw = P4->IN;
-
     uint8_t lower = raw & 0x0F;
     uint8_t upper = raw & 0xF0;
 
-    // lower
     shift = lower >> 1;
     tmp = raw & 0x01;
     shift &= tmp;
-
     res = upper >> 2 | shift;
 
     return res;
