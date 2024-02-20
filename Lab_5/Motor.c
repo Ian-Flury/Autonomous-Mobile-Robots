@@ -117,6 +117,7 @@ void Motor_Forward(uint16_t leftDuty, uint16_t rightDuty){
   PWM_Duty3(rightDuty);
   PWM_Duty4(leftDuty);
   Front_Lights_ON();
+  Back_Lights_OFF();
 }
 
 // ------------Motor_Right------------
@@ -134,6 +135,7 @@ void Motor_Right(uint16_t leftDuty, uint16_t rightDuty){
     P5 -> OUT = (P5->OUT&(~0x30)) | 0x20;     // right motor goes backwards.
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
+    Back_Lights_OFF();
 }
 
 // ------------Motor_Left------------
@@ -151,6 +153,7 @@ void Motor_Left(uint16_t leftDuty, uint16_t rightDuty){
     P5 -> OUT = (P5->OUT &(~0x30)) | 0x10;     // left motor goes backwards
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
+    Back_Lights_OFF();
 }
 
 // ------------Motor_Backward------------

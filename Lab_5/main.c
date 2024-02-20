@@ -59,9 +59,13 @@ void main(void)
             break;
         case 4: // Left Forward, Right Backwards (Hard Right)
             Motor_Right(1.5*speed, 1.5*speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
             break;
         case 5: // Right Forward, Left Backwards (Hard Left)
             Motor_Left(1.5*speed, 1.5*speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
             break;
         case 6: // Backwards
             Motor_Backward(speed, speed);
