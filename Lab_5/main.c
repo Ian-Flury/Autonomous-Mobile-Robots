@@ -26,15 +26,15 @@ State_t fsm[6]= {
     {0x01, 10, { HardRight, HardRight,  Center,     Center}},   // Turn Right
     {0x02, 10, { HardLeft,  Center,     HardLeft,   Center}},   // Turn Left
     {0x03, 20, { HardRight, Right,      Left,       Center}},   // Center
-    {0x04, 20, { HardRight, HardRight,  Left,       Center}},   // Turn Hard Right
-    {0x05, 20, { HardLeft,  Right,      HardLeft,   Center}},   // Turn Hard Left
+    {0x04, 50, { HardRight, HardRight,  Left,       Center}},   // Turn Hard Right
+    {0x05, 50, { HardLeft,  Right,      HardLeft,   Center}},   // Turn Hard Left
     {0x06, 20, { Backward,  Right,      Left,       Center}}    // Center
 };
 
 State_t *Spt; // pointer to the current state
 void main(void)
 {
-    uint16_t speed = 2500;
+    uint16_t speed = 3000;
     uint8_t next_state;
     uint8_t leftMotor, rightMotor;
     uint32_t Time = 1000;
@@ -49,10 +49,10 @@ void main(void)
         switch(Spt->out)
         {
         case 1: // Left Forward (Turn Right)
-            Motor_Forward(speed, speed/3);
+            Motor_Forward(speed*1.1, speed);
             break;
         case 2: // Right Forward (Turn Left)
-            Motor_Forward(speed/3, speed);
+            Motor_Forward(speed, speed*1.1);
             break;
         case 3: // Forward
             Motor_Forward(speed, speed);
