@@ -30,7 +30,7 @@ void main(void)
 		int i;
 		for (i = 0; i < NUM_OF_SAMPLES; i++)
 		{
-			ADC_In17_14_16(&left, &center, &right);
+			ADC_In17_14_16(&right, &center, &left);
 			left_buf[i] = left;
 			center_buf[i] = center;
 			right_buf[i] = right;
@@ -48,5 +48,13 @@ void main(void)
 		right_avg = right_avg / NUM_OF_SAMPLES;
 
 		Clock_Delay1ms(1000);
+
+		// reset
+		left_avg = 0.0;
+		right_avg = 0.0;
+		center_avg = 0.0;
+		left = 0;
+		right = 0;
+		center = 0;
 	}
 }
