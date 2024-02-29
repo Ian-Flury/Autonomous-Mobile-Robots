@@ -6,17 +6,23 @@
 
 double compute_left_distance(float left_avg)
 {
-
+	double exp = -1.239
+	double coeff = pow(10,7);
+	return (coeff * pow(left_avg, exp));
 }
 
 double compute_right_distance(float right_avg)
 {
-	
+	double exp = -1.217;
+	double coeff = 8000000;
+	return (coeff * pow(left_avg, exp));
 }
 
 double compute_center_distance(float center_avg)
 {
-	
+	double exp = -1.248;
+	double coeff = pow(10,7);
+	return (coeff * pow(center_avg, exp));
 }
 
 /**
@@ -64,7 +70,7 @@ void main(void)
 
 		// compute the distance in mm
 
-		
+		double left_mm = compute_left_distance(left_avg);
 
 
 		Clock_Delay1ms(1000);
