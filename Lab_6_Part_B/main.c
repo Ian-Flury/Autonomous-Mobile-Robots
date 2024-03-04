@@ -1,9 +1,11 @@
 #include "msp.h"
 #include "Clock.h"
 #include "ADC14.h"
+#include "Motor.h"
+#include "RobotLights.h"
 #include <math.h>
 
-#define NUM_OF_SAMPLES 30
+#define NUM_OF_SAMPLES 5
 
 double compute_left_distance(float left_avg)
 {
@@ -55,6 +57,7 @@ void main(void)
 	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
 	Clock_Init48MHz();
 	ADC0_InitSWTriggerCh17_14_16();
+	Motor_Init();
 
 	//  A17,  A16,   A14
 	uint32_t left, right, center;
@@ -95,7 +98,7 @@ void main(void)
 		double right_mm = compute_right_distance(right_avg);
 		double center_mm = compute_center_distance(center_avg);
 
-		Clock_Delay1ms(1000);
+//		Clock_Delay1ms(1000);
 
 		// reset
 		left_avg = 0.0;
@@ -104,5 +107,46 @@ void main(void)
 		left = 0;
 		right = 0;
 		center = 0;
-	}
+
+		uint16_t speed = 3000;
+        uint32_t delay = 0;
+        uint8_t collision_detected;
+
+        switch(control(left_mm, center_mm, right_mm))
+        {
+        case 1: // Collision Right, Turn Left
+            delay = 20;
+            Motor_Left(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+            break;
+        case 2: // Collision Front, Reverse, Turn Right
+            delay = 20;
+            Front_Lights_OFF();
+            Motor_Backward(speed, speed);
+            Clock_Delay1ms(delay);
+            delay = 20;
+            Motor_Right(speed, speed);
+            Back_Lights_ON();
+            break;
+        case 4: // Collision Left, Turn Right
+            delay = 20;
+            Motor_Right(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+            break;
+        case 5: // Collision Sides, Turn Around
+            delay = 110;
+            Motor_Right(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+            break;
+        default:
+            delay = 30;
+            Motor_Forward(speed, speed);
+            Front_Lights_ON();
+            break;
+        }
+        Clock_Delay1ms(delay);
+    }
 }
