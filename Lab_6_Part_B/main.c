@@ -4,6 +4,7 @@
 #include "Motor.h"
 #include "RobotLights.h"
 #include <math.h>
+#include "BumpInt.h"
 
 #define NUM_OF_SAMPLES 5
 
@@ -11,6 +12,10 @@ double compute_left_distance(float left_avg);
 double compute_right_distance(float right_avg);
 double compute_center_distance(float center_avg);
 uint8_t control(double left_mm, double center_mm, double right_mm);
+
+// Handle Collisions
+uint8_t bump;
+void HandleCollision(uint8_t ISR_data);
 
 /**
  * main.c
@@ -23,6 +28,7 @@ void main(void)
 	Clock_Init48MHz();
 	ADC0_InitSWTriggerCh17_14_16();
 	Motor_Init();
+	BumpInt_Init(&HandleCollision);
 
 	//       A17,  A16,   A14
 	uint32_t left, right, center;
@@ -162,4 +168,16 @@ uint8_t control(double left_mm, double center_mm, double right_mm)
         control |= 0x01;
     }
     return control;
+}
+
+void HandleCollision(uint8_t ISR_data)
+{
+    Motor_Stop();
+    Motor_Backward(3000,3000);
+    Clock_Delay1ms(800);
+    Motor_Stop();
+    Motor_Right(3000,3000);
+    Clock_Delay1ms(400);
+    bump = ~ISR_data;
+    bump = bump & 0x3F;
 }
