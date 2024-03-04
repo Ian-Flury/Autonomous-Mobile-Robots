@@ -1,12 +1,13 @@
 #include "msp.h"
 #include "Clock.h"
 #include "ADC14.h"
+#include <math.h>
 
 #define NUM_OF_SAMPLES 30
 
 double compute_left_distance(float left_avg)
 {
-	double exp = -1.239
+	double exp = -1.239;
 	double coeff = pow(10,7);
 	return (coeff * pow(left_avg, exp));
 }
@@ -15,7 +16,7 @@ double compute_right_distance(float right_avg)
 {
 	double exp = -1.217;
 	double coeff = 8000000;
-	return (coeff * pow(left_avg, exp));
+	return (coeff * pow(right_avg, exp));
 }
 
 double compute_center_distance(float center_avg)
@@ -23,6 +24,26 @@ double compute_center_distance(float center_avg)
 	double exp = -1.248;
 	double coeff = pow(10,7);
 	return (coeff * pow(center_avg, exp));
+}
+
+uint8_t control(double left_mm, double center_mm, double right_mm)
+{
+	uint8_t control = 0;
+	if (left_mm < 110)
+	{
+		control |= 0x04;
+	}
+
+	if (center_mm < 110)
+	{
+		control |= 0x02;
+	}
+
+	if (right_mm < 110)
+	{
+		control |= 0x01;
+	}
+	return control;
 }
 
 /**
@@ -71,7 +92,8 @@ void main(void)
 		// compute the distance in mm
 
 		double left_mm = compute_left_distance(left_avg);
-
+		double right_mm = compute_right_distance(right_avg);
+		double center_mm = compute_center_distance(center_avg);
 
 		Clock_Delay1ms(1000);
 
