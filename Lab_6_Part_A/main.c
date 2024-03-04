@@ -32,7 +32,6 @@ void main(void)
 	//  A17,  A16,   A14
 	uint32_t left, right, center;
 
-
 	uint32_t left_buf[NUM_OF_SAMPLES];
 	uint32_t center_buf[NUM_OF_SAMPLES];
 	uint32_t right_buf[NUM_OF_SAMPLES];
@@ -64,9 +63,6 @@ void main(void)
 
 		// compute the distance in mm
 
-		
-
-
 		Clock_Delay1ms(1000);
 
 		// reset
@@ -76,5 +72,46 @@ void main(void)
 		left = 0;
 		right = 0;
 		center = 0;
+
+		uint16_t speed = 3000;
+		uint32_t delay = 0;
+		uint8_t collision_detected;
+
+		switch(collision_detected)
+		{
+		case 1: // Collision Right, Turn Left
+		    delay = 20;
+		    Motor_Left(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+		    break;
+		case 2: // Collision Front, Reverse, Turn Right
+		    delay = 20;
+		    Motor_Backward(speed, speed);
+		    Clock_Delay1ms(delay);
+		    delay = 20;
+		    Motor_Right(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+		    break;
+		case 4: // Collision Left, Turn Right
+		    delay = 20;
+		    Motor_Right(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+		    break;
+		case 5: // Collision Sides, Turn Around
+		    delay = 110;
+		    Motor_Right(speed, speed);
+            Back_Lights_ON();
+            Front_Lights_OFF();
+		    break;
+		default:
+		    delay = 30;
+		    Motor_Forward(speed, speed);
+		    Front_Lights_ON();
+		    break;
+		}
+		Clock_Delay1ms(delay);
 	}
 }
