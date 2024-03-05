@@ -6,7 +6,7 @@
 #include <math.h>
 #include "BumpInt.h"
 
-#define NUM_OF_SAMPLES 5
+#define NUM_OF_SAMPLES 1
 
 double compute_left_distance(float left_avg);
 double compute_right_distance(float right_avg);
@@ -33,6 +33,7 @@ void main(void)
 	//       A17,  A16,   A14
 	uint32_t left, right, center;
 	uint32_t delay = 100;
+	uint32_t turn_delay = 1800;
 	uint8_t  collision_detected;
 	uint16_t speed = 3000;
 
@@ -53,74 +54,56 @@ void main(void)
         right = 0;
         center = 0;
 
-	    // Collect Samples
-		int i;
-		for (i = 0; i < NUM_OF_SAMPLES; i++) {
-			ADC_In17_14_16(&right, &center, &left);
-			left_buf[i] = left;
-			center_buf[i] = center;
-			right_buf[i] = right;
-		}
-
-		// Compute Sample Average
-		for (i = 0; i < NUM_OF_SAMPLES; i++) {
-			left_avg += (float)left_buf[i];
-			center_avg += (float)center_buf[i];
-			right_avg += (float)right_buf[i];
-		}
-		left_avg = left_avg / NUM_OF_SAMPLES;
-		center_avg = center_avg / NUM_OF_SAMPLES;
-		right_avg = right_avg / NUM_OF_SAMPLES;
-
-		// Compute Distance (mm) - Identify Collisions
-		left_mm = compute_left_distance(left_avg);
-		right_mm = compute_right_distance(right_avg);
-		center_mm = compute_center_distance(center_avg);
+		// Compute Distance (mm) - Identify
+		ADC_In17_14_16(&right, &center, &left);
+		left_mm = compute_left_distance(left);
+		right_mm = compute_right_distance(right);
+		center_mm = compute_center_distance(center);
         collision_detected = control(left_mm, center_mm, right_mm);
 
         switch(collision_detected)
         {
         case 1: // Collision Right, Slight Left
             delay = 15;
-            Motor_Forward(speed, 1.1 * speed);
+            Motor_Left(speed, speed);
             break;
 
         case 2: // Collision Front, Reverse -> Turn Right
             Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay * 5);
+            Clock_Delay1ms(delay / 2);
             Motor_Stop();
 
-            delay = 950;
+            delay = turn_delay / 2;
             Motor_Right(speed, speed);
             break;
 
         case 3: // Collision Front-Right, Slight Left
             delay = 15;
-            Motor_Forward(speed, 1.1 * speed);
+            Motor_Left(speed, speed);
             break;
 
         case 4: // Collision Left, Slight Right
             delay = 15;
-            Motor_Forward(1.1 * speed, speed);
+            Motor_Right(speed, speed);
             break;
 
         case 5: // Collision Sides, Turn Around
-            delay = 950;
+            delay = turn_delay;
             Motor_Stop();
             Motor_Right(speed, speed);
             break;
 
         case 6: // Collision Front-Left, Slight Right
             delay = 15;
-            Motor_Forward(1.1 * speed, speed);
+            Motor_Right(speed, speed);
             break;
 
         case 7: // Corner Collision
             Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay * 5);
+            Clock_Delay1ms(delay / 2);
             Motor_Stop();
 
-            delay = 950;
+            delay = turn_delay / 2;
             Motor_Right(speed, speed);
             break;
 
