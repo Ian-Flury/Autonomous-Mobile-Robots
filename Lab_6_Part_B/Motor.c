@@ -170,5 +170,6 @@ void Motor_Backward(uint16_t leftDuty, uint16_t rightDuty){
     P5 -> OUT = (P5->OUT&(~0x30)) | 0x30; // ones for backward movement.
     PWM_Duty3(rightDuty);
     PWM_Duty4(leftDuty);
+    Front_Lights_OFF();
     Back_Lights_ON();
 }
