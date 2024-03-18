@@ -17,6 +17,36 @@ uint8_t control(double left_mm, double center_mm, double right_mm);
 uint8_t bump;
 void HandleCollision(uint8_t ISR_data);
 
+// FSM
+struct State {
+    uint32_t out;
+    uint32_t delay; // MAY NOT NEED THIS
+    const struct State *next[8]; // Next if 2-bit input is 0-3
+};
+typedef const struct State State_t;
+
+#define Forward &fsm[0]
+#define SlightRight &fsm[1]
+#define SlightLeft &fsm[2]
+#define TurnRight &fsm[3]
+#define TurnLeft &fsm[4]
+#define Turn180 &fsm[5]
+#define Backwards &fsm[6]
+
+
+State_t fsm[7]= {
+//  IR READING:   0x00        0x01           0x02          0x03           0x04            0x05        0x06            0x07
+    {0x01, 20,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Forward
+    {0x02, 15,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Slight Right
+    {0x03, 15,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Slight Left
+    {0x04, 850, { Forward,    SlightLeft,    Turn180,      SlightLeft,    SlightRight,    Turn180,    SlightRight,    Turn180      }},  // Turn Right
+    {0x05, 850, { Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn Left
+    {0x06, 1800,{ Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn 180 Degrees
+    {0x07, 10,  { Forward,    SlightLeft,    Turn180,      SlightLeft,    SlightRight,    Turn180,    SlightRight,    Turn180      }}   // Backwards
+};
+
+State_t *Spt; // pointer to the current state
+
 /**
  * main.c
  */
@@ -32,86 +62,72 @@ void main(void)
 
 	//       A17,  A16,   A14
 	uint32_t left, right, center;
-	uint32_t delay = 100;
-	uint32_t turn_delay = 1800;
 	uint8_t  collision_detected;
+	uint8_t next_state;
+
 	uint16_t speed = 3000;
 
-	uint32_t left_buf[NUM_OF_SAMPLES];
-	uint32_t center_buf[NUM_OF_SAMPLES];
-	uint32_t right_buf[NUM_OF_SAMPLES];
-
-	float left_avg, center_avg, right_avg;
 	double left_mm, center_mm, right_mm;
+
+	Spt = Forward;
+
 
 	while (1)
 	{
 	    // Reset
-        left_avg = 0.0;
-        right_avg = 0.0;
-        center_avg = 0.0;
         left = 0;
         right = 0;
         center = 0;
 
-		// Compute Distance (mm) - Identify
-		ADC_In17_14_16(&right, &center, &left);
-		left_mm = compute_left_distance(left);
-		right_mm = compute_right_distance(right);
-		center_mm = compute_center_distance(center);
-        collision_detected = control(left_mm, center_mm, right_mm);
+        // Compute Distance (mm) - Identify
+        ADC_In17_14_16(&right, &center, &left);
+        left_mm = compute_left_distance(left);
+        right_mm = compute_right_distance(right);
+        center_mm = compute_center_distance(center);
 
-        switch(collision_detected)
+        next_state = control(left_mm, center_mm, right_mm);
+        Spt = Spt->next[next_state];
+
+
+        switch(Spt->out)
         {
-        case 1: // Collision Right, Slight Left
-            delay = 15;
+        case 1: // Forward
+            Motor_Forward(speed, speed);
+            break;
+
+        case 2: // Slight Right
+
+            Motor_Right(speed, speed);
+            break;
+
+        case 3: // Slight Left
             Motor_Left(speed, speed);
             break;
 
-        case 2: // Collision Front, Reverse -> Turn Right
-            Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
-            Motor_Stop();
-
-            delay = turn_delay / 2;
+        case 4: // Turn Right
             Motor_Right(speed, speed);
             break;
 
-        case 3: // Collision Front-Right, Slight Left
-            delay = 15;
+        case 5: // Turn Left
             Motor_Left(speed, speed);
             break;
 
-        case 4: // Collision Left, Slight Right
-            delay = 15;
+        case 6: // Turn 180
             Motor_Right(speed, speed);
             break;
 
-        case 5: // Collision Sides, Turn Around
-            delay = turn_delay;
-            Motor_Stop();
-            Motor_Right(speed, speed);
-            break;
-
-        case 6: // Collision Front-Left, Slight Right
-            delay = 15;
-            Motor_Right(speed, speed);
-            break;
-
-        case 7: // Corner Collision
+        case 7: // Backwards
             Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
+            Clock_Delay1ms(15);
             Motor_Stop();
-
-            delay = turn_delay / 2;
-            Motor_Right(speed, speed);
             break;
 
         default:
-            Motor_Forward(speed, speed);
             break;
         }
-        Clock_Delay1ms(delay);
+        Clock_Delay1ms(Spt->delay);
+
+
     }
 }
 
