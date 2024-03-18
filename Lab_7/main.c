@@ -36,12 +36,12 @@ typedef const struct State State_t;
 
 State_t fsm[7]= {
 //  IR READING:   0x00        0x01           0x02          0x03           0x04            0x05        0x06            0x07
-    {0x01, 20,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Forward
+    {0x01, 10,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Forward
     {0x02, 15,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Slight Right
     {0x03, 15,  { Forward,    SlightLeft,    TurnRight,    SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnRight    }},  // Slight Left
-    {0x04, 850, { Forward,    SlightLeft,    Turn180,      SlightLeft,    SlightRight,    Turn180,    SlightRight,    Turn180      }},  // Turn Right
-    {0x05, 850, { Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn Left
-    {0x06, 1800,{ Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn 180 Degrees
+    {0x04, 1,   { Forward,    SlightLeft,    Turn180,      Turn180,    SlightRight,    Turn180,    SlightRight,    Turn180      }},  // Turn Right
+    {0x05, 785, { Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn Left
+    {0x06, 1525,{ Forward,    SlightLeft,    TurnLeft,     SlightLeft,    SlightRight,    Turn180,    SlightRight,    TurnLeft     }},  // Turn 180 Degrees
     {0x07, 10,  { Forward,    SlightLeft,    Turn180,      SlightLeft,    SlightRight,    Turn180,    SlightRight,    Turn180      }}   // Backwards
 };
 
@@ -71,23 +71,12 @@ void main(void)
 
 	Spt = Forward;
 
-
 	while (1)
 	{
 	    // Reset
         left = 0;
         right = 0;
         center = 0;
-
-        // Compute Distance (mm) - Identify
-        ADC_In17_14_16(&right, &center, &left);
-        left_mm = compute_left_distance(left);
-        right_mm = compute_right_distance(right);
-        center_mm = compute_center_distance(center);
-
-        next_state = control(left_mm, center_mm, right_mm);
-        Spt = Spt->next[next_state];
-
 
         switch(Spt->out)
         {
@@ -96,7 +85,6 @@ void main(void)
             break;
 
         case 2: // Slight Right
-
             Motor_Right(speed, speed);
             break;
 
@@ -106,6 +94,14 @@ void main(void)
 
         case 4: // Turn Right
             Motor_Right(speed, speed);
+            Clock_Delay1ms(785);
+
+            ADC_In17_14_16(&right, &center, &left);
+            if (compute_center_distance(center) > 100) {
+                Motor_Forward(speed, speed);
+                Clock_Delay1ms(15);
+            }
+
             break;
 
         case 5: // Turn Left
@@ -127,7 +123,14 @@ void main(void)
         }
         Clock_Delay1ms(Spt->delay);
 
+        // Compute Distance (mm) - Identify
+        ADC_In17_14_16(&right, &center, &left);
+        left_mm = compute_left_distance(left);
+        right_mm = compute_right_distance(right);
+        center_mm = compute_center_distance(center);
+        next_state = control(left_mm, center_mm, right_mm);
 
+        Spt = Spt->next[next_state];
     }
 }
 
@@ -155,15 +158,15 @@ double compute_center_distance(float center_avg)
 uint8_t control(double left_mm, double center_mm, double right_mm)
 {
     uint8_t control = 0;
-    if (left_mm < 110) {
+    if (left_mm < 100) {
         control |= 0x04;
     }
 
-    if (center_mm < 110) {
+    if (center_mm < 100) {
         control |= 0x02;
     }
 
-    if (right_mm < 110) {
+    if (right_mm < 100) {
         control |= 0x01;
     }
     return control;
