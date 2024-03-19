@@ -12,13 +12,12 @@ double compute_left_distance(float left_avg);
 double compute_right_distance(float right_avg);
 double compute_center_distance(float center_avg);
 uint8_t control(double left, double center, double right);
-uint8_t robo_action(uint8_t control, double left, double center, double right);
 
 // Handle Collisions
-uint8_t bump;
 void HandleCollision(uint8_t ISR_data);
+uint8_t bump;
 
-/**
+/*
  * main.c
  */
 
@@ -35,6 +34,7 @@ void main(void)
     uint32_t left, right, center;
     uint8_t ir_scan;
     uint16_t speed = 3000;
+    uint16_t fspeed = 3000;
     double left_mm, center_mm, right_mm;
 
     while (1)
@@ -44,38 +44,42 @@ void main(void)
         right = 0;
         center = 0;
 
-        // Compute Distance (mm) - Identify
+        // Compute Distance (mm)
         ADC_In17_14_16(&right, &center, &left);
         left_mm = compute_left_distance(left);
         right_mm = compute_right_distance(right);
         center_mm = compute_center_distance(center);
         ir_scan = control(left_mm, center_mm, right_mm);
 
-        switch(robo_action(ir_scan, left_mm, center_mm, right_mm))
+        switch(ir_scan)
         {
         case 1: // Forward
-            Motor_Forward(speed, speed);
-            Clock_Delay1ms(10);
+            Motor_Forward(fspeed, fspeed);
+            Clock_Delay1ms(20);
             break;
 
         case 2: // Slight Right
-            Motor_Right(speed, speed);
-            Clock_Delay1ms(15);
+            Motor_Forward(speed*1.1, speed);
+            Clock_Delay1ms(10);
             break;
 
         case 3: // Slight Left
-            Motor_Left(speed, speed);
-            Clock_Delay1ms(15);
+            Motor_Forward(speed, speed*1.1);
+            Clock_Delay1ms(10);
             break;
 
         case 4: // Turn Right
             Motor_Right(speed, speed);
             Clock_Delay1ms(785);
+            Motor_Forward(fspeed, fspeed);
+            Clock_Delay1ms(20);
             break;
 
         case 5: // Turn Left
             Motor_Left(speed, speed);
             Clock_Delay1ms(785);
+            Motor_Forward(fspeed, fspeed);
+            Clock_Delay1ms(20);
             break;
 
         case 6: // Turn 180
@@ -92,8 +96,6 @@ void main(void)
         default:
             break;
         }
-//        Clock_Delay1ms(Spt->delay);
-//        Spt = Spt->next[next_state];
     }
 }
 
@@ -118,62 +120,43 @@ double compute_center_distance(float center_avg)
     return (coeff * pow(center_avg, exp));
 }
 
-uint8_t robo_action(uint8_t control, double left, double center, double right)
+uint8_t control(double left, double center, double right)
 {
-    // ADD GAP DETECTION
+    // Dead End
+    if (left < 120 & center < 120 & right < 120) {
+        return 5;
+    }
 
-    switch(control)
-    {
-    case 0: // Forward
-        return 1;
-
-    case 1: // Slight Left
-        return 3;
-
-    case 2:
-        if (right > left + 5){
+    // Front Collision (T-Intersection)
+    if (center < 110) {
+        if (right > left){
             return 4;
         }
-        // Prioritize Turning Left @ T-Intersection
         else {
             return 5;
         }
-
-    case 3: // Slight Left
-        return 3;
-
-    case 4: // Slight Right
-        return 2;
-
-    case 5: // Corner, Turn 180
-        return 6;
-
-    case 6: // Slight Right
-        return 2;
-
-    case 7:
-        return 6;
-
-    default:
-        return 1;
-    }
-}
-
-uint8_t control(double left, double center, double right)
-{
-    uint8_t control = 0;
-    if (left < 100) {
-        control |= 0x04;
     }
 
-    if (center < 100) {
-        control |= 0x02;
+    // Traveling Forward
+    else {
+        // Slight Left
+        if (right < 100){
+            return 3;
+        }
+
+        // Found Gap -> turn right
+        if (right > 140){
+            return 4;
+        }
+
+        // Slight Right
+        if (right > 110){
+            return 2;
+        }
     }
 
-    if (right < 100) {
-        control |= 0x01;
-    }
-    return control;
+    // Default Move Forward
+    return 1;
 }
 
 void HandleCollision(uint8_t ISR_data)
