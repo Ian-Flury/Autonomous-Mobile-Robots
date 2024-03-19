@@ -11,7 +11,8 @@
 double compute_left_distance(float left_avg);
 double compute_right_distance(float right_avg);
 double compute_center_distance(float center_avg);
-uint8_t control(double left_mm, double center_mm, double right_mm);
+uint8_t control(double left, double center, double right);
+uint8_t robo_action(uint8_t control, double left, double center, double right);
 
 // Handle Collisions
 uint8_t bump;
@@ -23,95 +24,76 @@ void HandleCollision(uint8_t ISR_data);
 
 void main(void)
 {
-	// Initialization Functions
-	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
-	Clock_Init48MHz();
-	ADC0_InitSWTriggerCh17_14_16();
-	Motor_Init();
-	BumpInt_Init(&HandleCollision);
+    // Initialization Functions
+    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
+    Clock_Init48MHz();
+    ADC0_InitSWTriggerCh17_14_16();
+    Motor_Init();
+    BumpInt_Init(&HandleCollision);
 
-	//       A17,  A16,   A14
-	uint32_t left, right, center;
-	uint32_t delay = 100;
-	uint32_t turn_delay = 1800;
-	uint8_t  collision_detected;
-	uint16_t speed = 3000;
+    //       A17,  A16,   A14
+    uint32_t left, right, center;
+    uint8_t ir_scan;
+    uint16_t speed = 3000;
+    double left_mm, center_mm, right_mm;
 
-	uint32_t left_buf[NUM_OF_SAMPLES];
-	uint32_t center_buf[NUM_OF_SAMPLES];
-	uint32_t right_buf[NUM_OF_SAMPLES];
-
-	float left_avg, center_avg, right_avg;
-	double left_mm, center_mm, right_mm;
-
-	while (1)
-	{
-	    // Reset
-        left_avg = 0.0;
-        right_avg = 0.0;
-        center_avg = 0.0;
+    while (1)
+    {
+        // Reset
         left = 0;
         right = 0;
         center = 0;
 
-		// Compute Distance (mm) - Identify
-		ADC_In17_14_16(&right, &center, &left);
-		left_mm = compute_left_distance(left);
-		right_mm = compute_right_distance(right);
-		center_mm = compute_center_distance(center);
-        collision_detected = control(left_mm, center_mm, right_mm);
+        // Compute Distance (mm) - Identify
+        ADC_In17_14_16(&right, &center, &left);
+        left_mm = compute_left_distance(left);
+        right_mm = compute_right_distance(right);
+        center_mm = compute_center_distance(center);
+        ir_scan = control(left_mm, center_mm, right_mm);
 
-        switch(collision_detected)
+        switch(robo_action(ir_scan, left_mm, center_mm, right_mm))
         {
-        case 1: // Collision Right, Slight Left
-            delay = 15;
+        case 1: // Forward
+            Motor_Forward(speed, speed);
+            Clock_Delay1ms(10);
+            break;
+
+        case 2: // Slight Right
+            Motor_Right(speed, speed);
+            Clock_Delay1ms(15);
+            break;
+
+        case 3: // Slight Left
             Motor_Left(speed, speed);
+            Clock_Delay1ms(15);
             break;
 
-        case 2: // Collision Front, Reverse -> Turn Right
-            Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
-            Motor_Stop();
-
-            delay = turn_delay / 2;
+        case 4: // Turn Right
             Motor_Right(speed, speed);
+            Clock_Delay1ms(785);
             break;
 
-        case 3: // Collision Front-Right, Slight Left
-            delay = 15;
+        case 5: // Turn Left
             Motor_Left(speed, speed);
+            Clock_Delay1ms(785);
             break;
 
-        case 4: // Collision Left, Slight Right
-            delay = 15;
+        case 6: // Turn 180
             Motor_Right(speed, speed);
+            Clock_Delay1ms(1575);
             break;
 
-        case 5: // Collision Sides, Turn Around
-            delay = turn_delay;
-            Motor_Stop();
-            Motor_Right(speed, speed);
-            break;
-
-        case 6: // Collision Front-Left, Slight Right
-            delay = 15;
-            Motor_Right(speed, speed);
-            break;
-
-        case 7: // Corner Collision
+        case 7: // Backwards
             Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
+            Clock_Delay1ms(15);
             Motor_Stop();
-
-            delay = turn_delay / 2;
-            Motor_Right(speed, speed);
             break;
 
         default:
-            Motor_Forward(speed, speed);
             break;
         }
-        Clock_Delay1ms(delay);
+//        Clock_Delay1ms(Spt->delay);
+//        Spt = Spt->next[next_state];
     }
 }
 
@@ -136,18 +118,59 @@ double compute_center_distance(float center_avg)
     return (coeff * pow(center_avg, exp));
 }
 
-uint8_t control(double left_mm, double center_mm, double right_mm)
+uint8_t robo_action(uint8_t control, double left, double center, double right)
+{
+    // ADD GAP DETECTION
+
+    switch(control)
+    {
+    case 0: // Forward
+        return 1;
+
+    case 1: // Slight Left
+        return 3;
+
+    case 2:
+        if (right > left + 5){
+            return 4;
+        }
+        // Prioritize Turning Left @ T-Intersection
+        else {
+            return 5;
+        }
+
+    case 3: // Slight Left
+        return 3;
+
+    case 4: // Slight Right
+        return 2;
+
+    case 5: // Corner, Turn 180
+        return 6;
+
+    case 6: // Slight Right
+        return 2;
+
+    case 7:
+        return 6;
+
+    default:
+        return 1;
+    }
+}
+
+uint8_t control(double left, double center, double right)
 {
     uint8_t control = 0;
-    if (left_mm < 110) {
+    if (left < 100) {
         control |= 0x04;
     }
 
-    if (center_mm < 110) {
+    if (center < 100) {
         control |= 0x02;
     }
 
-    if (right_mm < 110) {
+    if (right < 100) {
         control |= 0x01;
     }
     return control;
