@@ -55,43 +55,43 @@ void main(void)
         {
         case 1: // Forward
             Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(20);
+            Clock_Delay1ms(5);
             break;
 
         case 2: // Slight Right
-            Motor_Forward(speed*1.1, speed);
+            Motor_Forward(fspeed*1.5, fspeed);
             Clock_Delay1ms(10);
             break;
 
         case 3: // Slight Left
-            Motor_Forward(speed, speed*1.1);
+            Motor_Forward(fspeed, fspeed*1.5);
             Clock_Delay1ms(10);
             break;
 
         case 4: // Turn Right
             Motor_Right(speed, speed);
-            Clock_Delay1ms(785);
+            Clock_Delay1ms(650);
             Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(20);
+            Clock_Delay1ms(15);
             break;
 
         case 5: // Turn Left
             Motor_Left(speed, speed);
-            Clock_Delay1ms(785);
+            Clock_Delay1ms(650);
             Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(20);
+            Clock_Delay1ms(15);
             break;
 
         case 6: // Turn 180
             Motor_Right(speed, speed);
             Clock_Delay1ms(1575);
             break;
-
-        case 7: // Backwards
-            Motor_Backward(speed, speed);
-            Clock_Delay1ms(15);
-            Motor_Stop();
-            break;
+//
+//        case 7: // Backwards
+//            Motor_Backward(speed, speed);
+//            Clock_Delay1ms(15);
+//            Motor_Stop();
+//            break;
 
         default:
             break;
@@ -122,41 +122,39 @@ double compute_center_distance(float center_avg)
 
 uint8_t control(double left, double center, double right)
 {
-    // Dead End
-    if (left < 120 & center < 120 & right < 120) {
-        return 5;
-    }
-
-    // Front Collision (T-Intersection)
-    if (center < 110) {
-        if (right > left){
-            return 4;
+    uint8_t control = 1;
+    uint16_t speed = 3500;
+    if (center < 100) {
+        if (left < 130 & right < 130) {
+            control = 5;
+        }
+        else if (right > left + 20) {
+            control = 4;
         }
         else {
-            return 5;
+            control = 5;
         }
     }
-
-    // Traveling Forward
     else {
         // Slight Left
-        if (right < 100){
-            return 3;
+        if (right < 100) {
+            control = 3;
         }
 
         // Found Gap -> turn right
-        if (right > 140){
-            return 4;
+        if (right > 350){
+            Motor_Forward(speed, speed);
+            Clock_Delay1ms(1200);
+            control = 4;
         }
 
         // Slight Right
-        if (right > 110){
-            return 2;
+        if (right > 125 & right < 350){
+            control = 2;
         }
     }
 
-    // Default Move Forward
-    return 1;
+    return control;
 }
 
 void HandleCollision(uint8_t ISR_data)
