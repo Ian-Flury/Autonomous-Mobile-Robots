@@ -72,14 +72,14 @@ void main(void)
             Motor_Right(speed, speed);
             Clock_Delay1ms(650);
             Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(15);
+            Clock_Delay1ms(10);
             break;
 
         case 5: // Turn Left
             Motor_Left(speed, speed);
             Clock_Delay1ms(650);
             Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(15);
+            Clock_Delay1ms(10);
             break;
 
         case 6: // Turn 180
@@ -137,19 +137,19 @@ uint8_t control(double left, double center, double right)
     }
     else {
         // Slight Left
-        if (right < 100) {
+        if (right < 110) {
             control = 3;
         }
 
         // Found Gap -> turn right
         if (right > 350){
             Motor_Forward(speed, speed);
-            Clock_Delay1ms(1200);
+            Clock_Delay1ms(1300);
             control = 4;
         }
 
         // Slight Right
-        if (right > 125 & right < 350){
+        if (right > 110 & right < 350){
             control = 2;
         }
     }
