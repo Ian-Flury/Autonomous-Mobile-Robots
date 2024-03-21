@@ -11,7 +11,8 @@
 double compute_left_distance(float left_avg);
 double compute_right_distance(float right_avg);
 double compute_center_distance(float center_avg);
-uint8_t control(double left_mm, double center_mm, double right_mm);
+uint8_t control(double left, double center, double right);
+//uint8_t robo_follow(uint8_t control);
 
 // Handle Collisions
 uint8_t bump;
@@ -23,95 +24,67 @@ void HandleCollision(uint8_t ISR_data);
 
 void main(void)
 {
-	// Initialization Functions
-	WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;		// stop watchdog timer
-	Clock_Init48MHz();
-	ADC0_InitSWTriggerCh17_14_16();
-	Motor_Init();
-	BumpInt_Init(&HandleCollision);
+    // Initialization Functions
+    WDT_A->CTL = WDT_A_CTL_PW | WDT_A_CTL_HOLD;     // stop watchdog timer
+    Clock_Init48MHz();
+    ADC0_InitSWTriggerCh17_14_16();
+    Motor_Init();
+    BumpInt_Init(&HandleCollision);
 
-	//       A17,  A16,   A14
-	uint32_t left, right, center;
-	uint32_t delay = 100;
-	uint32_t turn_delay = 1800;
-	uint8_t  collision_detected;
-	uint16_t speed = 3000;
+    //       A17,  A16,   A14
+    uint32_t left, right, center;
+    uint8_t ir_scan;
+    uint16_t speed = 4000;
+    double left_mm, center_mm, right_mm;
 
-	uint32_t left_buf[NUM_OF_SAMPLES];
-	uint32_t center_buf[NUM_OF_SAMPLES];
-	uint32_t right_buf[NUM_OF_SAMPLES];
-
-	float left_avg, center_avg, right_avg;
-	double left_mm, center_mm, right_mm;
-
-	while (1)
-	{
-	    // Reset
-        left_avg = 0.0;
-        right_avg = 0.0;
-        center_avg = 0.0;
+    while (1)
+    {
+        // Reset
         left = 0;
         right = 0;
         center = 0;
 
-		// Compute Distance (mm) - Identify
-		ADC_In17_14_16(&right, &center, &left);
-		left_mm = compute_left_distance(left);
-		right_mm = compute_right_distance(right);
-		center_mm = compute_center_distance(center);
-        collision_detected = control(left_mm, center_mm, right_mm);
+        // Compute Distance (mm)
+        ADC_In17_14_16(&right, &center, &left);
+        left_mm = compute_left_distance(left);
+        right_mm = compute_right_distance(right);
+        center_mm = compute_center_distance(center);
+        ir_scan = control(left_mm, center_mm, right_mm);
 
-        switch(collision_detected)
+        switch(ir_scan)
         {
-        case 1: // Collision Right, Slight Left
-            delay = 15;
-            Motor_Left(speed, speed);
+        case 0: // Stop
+            Motor_Stop();
             break;
 
-        case 2: // Collision Front, Reverse -> Turn Right
+        case 1: // Forward
+            Motor_Forward(speed, speed);
+            break;
+
+        case 2: // Backwards
             Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
-            Motor_Stop();
+            break;
 
-            delay = turn_delay / 2;
+        case 3: // Slight Right
+            Motor_Right(1.5*speed, speed);
+            break;
+
+        case 4: // Slight Left
+            Motor_Left(speed, speed*1.5);
+            break;
+
+        case 5: // Turn Right
             Motor_Right(speed, speed);
             break;
 
-        case 3: // Collision Front-Right, Slight Left
-            delay = 15;
+        case 6: // Turn Left
             Motor_Left(speed, speed);
-            break;
-
-        case 4: // Collision Left, Slight Right
-            delay = 15;
-            Motor_Right(speed, speed);
-            break;
-
-        case 5: // Collision Sides, Turn Around
-            delay = turn_delay;
-            Motor_Stop();
-            Motor_Right(speed, speed);
-            break;
-
-        case 6: // Collision Front-Left, Slight Right
-            delay = 15;
-            Motor_Right(speed, speed);
-            break;
-
-        case 7: // Corner Collision
-            Motor_Backward(speed, speed);
-            Clock_Delay1ms(delay / 2);
-            Motor_Stop();
-
-            delay = turn_delay / 2;
-            Motor_Right(speed, speed);
             break;
 
         default:
-            Motor_Forward(speed, speed);
             break;
         }
-        Clock_Delay1ms(delay);
+        Clock_Delay1ms(5);
     }
 }
 
@@ -136,20 +109,51 @@ double compute_center_distance(float center_avg)
     return (coeff * pow(center_avg, exp));
 }
 
-uint8_t control(double left_mm, double center_mm, double right_mm)
+//uint8_t robo_follow(uint8_t control) {
+//    uint8_t follow = 0;
+//    return follow;
+//}
+
+uint8_t control(double left, double center, double right)
 {
-    uint8_t control = 0;
-    if (left_mm < 110) {
-        control |= 0x04;
+    uint16_t FAR = 400;
+    uint16_t CLOSE = 110;
+
+    // Stop
+    if (left > FAR & center > FAR & right > FAR) {
+        return 0;
     }
 
-    if (center_mm < 110) {
-        control |= 0x02;
+    // Forward
+    if (center < FAR & center > CLOSE) {
+        return 1;
     }
 
-    if (right_mm < 110) {
-        control |= 0x01;
+    // Backwards
+    if (center < CLOSE) {
+        return 2;
     }
+
+    // Slight Right
+    if (left > CLOSE & center > CLOSE & right > FAR) {
+        return 3;
+    }
+
+    // Slight Left
+    if (left > FAR & center > CLOSE & right > CLOSE) {
+        return 4;
+    }
+
+    // Turn Right
+    if (center > FAR & right > CLOSE) {
+        return 5;
+    }
+
+    // Turn Left
+    if (center > FAR & left > CLOSE) {
+        return 6;
+    }
+
     return control;
 }
 
