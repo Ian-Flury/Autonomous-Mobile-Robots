@@ -33,8 +33,8 @@ void main(void)
     //       A17,  A16,   A14
     uint32_t left, right, center;
     uint8_t ir_scan;
-    uint16_t speed = 3000;
-    uint16_t fspeed = 3000;
+    uint16_t speed = 2750;
+    uint16_t fspeed = 2750;
     double left_mm, center_mm, right_mm;
 
     while (1)
@@ -71,15 +71,15 @@ void main(void)
         case 4: // Turn Right
             Motor_Right(speed, speed);
             Clock_Delay1ms(650);
-            Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(10);
+//            Motor_Forward(fspeed, fspeed);
+//            Clock_Delay1ms(10);
             break;
 
         case 5: // Turn Left
             Motor_Left(speed, speed);
             Clock_Delay1ms(650);
-            Motor_Forward(fspeed, fspeed);
-            Clock_Delay1ms(10);
+//            Motor_Forward(fspeed, fspeed);
+//            Clock_Delay1ms(5);
             break;
 
         case 6: // Turn 180
@@ -123,8 +123,9 @@ double compute_center_distance(float center_avg)
 uint8_t control(double left, double center, double right)
 {
     uint8_t control = 1;
-    uint16_t speed = 3500;
-    if (center < 100) {
+    uint16_t speed = 3000;
+    if (center < 85) {
+        // Dead End
         if (left < 130 & right < 130) {
             control = 5;
         }
@@ -137,19 +138,19 @@ uint8_t control(double left, double center, double right)
     }
     else {
         // Slight Left
-        if (right < 110) {
+        if (right < 90) {
             control = 3;
         }
 
         // Found Gap -> turn right
         if (right > 350){
             Motor_Forward(speed, speed);
-            Clock_Delay1ms(1300);
+            Clock_Delay1ms(1000);
             control = 4;
         }
 
         // Slight Right
-        if (right > 110 & right < 350){
+        if (right > 90 & right < 350){
             control = 2;
         }
     }
