@@ -34,7 +34,7 @@ void main(void)
     //       A17,  A16,   A14
     uint32_t left, right, center;
     uint8_t ir_scan;
-    uint16_t speed = 4000;
+    uint16_t speed = 6000;
     double left_mm, center_mm, right_mm;
 
     while (1)
@@ -66,11 +66,11 @@ void main(void)
             break;
 
         case 3: // Slight Right
-            Motor_Right(1.5*speed, speed);
+            Motor_Forward(1.5*speed, speed);
             break;
 
         case 4: // Slight Left
-            Motor_Left(speed, speed*1.5);
+            Motor_Forward(speed, speed*1.5);
             break;
 
         case 5: // Turn Right
@@ -84,7 +84,7 @@ void main(void)
         default:
             break;
         }
-        Clock_Delay1ms(5);
+        Clock_Delay1ms(10);
     }
 }
 
@@ -116,17 +116,15 @@ double compute_center_distance(float center_avg)
 
 uint8_t control(double left, double center, double right)
 {
-    uint16_t FAR = 400;
-    uint16_t CLOSE = 110;
+    uint16_t FAR = 350;
+    uint16_t CLOSE = 75;
+
+    uint16_t SFAR = 350;
+    uint16_t SCLOSE = 50;
 
     // Stop
     if (left > FAR & center > FAR & right > FAR) {
         return 0;
-    }
-
-    // Forward
-    if (center < FAR & center > CLOSE) {
-        return 1;
     }
 
     // Backwards
@@ -134,27 +132,35 @@ uint8_t control(double left, double center, double right)
         return 2;
     }
 
-    // Slight Right
-    if (left > CLOSE & center > CLOSE & right > FAR) {
-        return 3;
+    // Forward
+    if (center < right & center < left) {
+        return 1;
     }
 
-    // Slight Left
-    if (left > FAR & center > CLOSE & right > CLOSE) {
-        return 4;
-    }
-
-    // Turn Right
-    if (center > FAR & right > CLOSE) {
+    // Right
+    if (right < left & right > SCLOSE) {
         return 5;
     }
 
-    // Turn Left
-    if (center > FAR & left > CLOSE) {
+    // Left
+    if (left < right & left > SCLOSE) {
         return 6;
     }
 
-    return control;
+
+
+//    // Turn Right
+//    if (center > FAR & right > CLOSE) {
+//        return 5;
+//    }
+//
+//    // Turn Left
+//    if (center > FAR & left > CLOSE) {
+//        return 6;
+//    }
+
+
+    return 0;
 }
 
 void HandleCollision(uint8_t ISR_data)
